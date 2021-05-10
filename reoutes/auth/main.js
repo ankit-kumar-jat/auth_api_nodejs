@@ -2,8 +2,9 @@ const { Router } = require("express");
 const { isAuthenticated, isNotAuthenticated } = require("../../utils/helpers");
 const User = require("../../models/user");
 const { parseError, sessionizeUser } = require("../../utils/helpers");
-const { signUp, signIn } = require("../../validation/user");
+const { signUp, signIn, updatePassword } = require("../../validation/user");
 require("dotenv").config();
+const { hashSync } = require("bcryptjs");
 
 /* ===================================
 
@@ -72,6 +73,30 @@ authRouter.delete("/logout", isAuthenticated, (req, res) => {
         });
     } catch (err) {
         res.status(400).send(parseError(err));
+    }
+});
+
+
+authRouter.post("/update-pass", isAuthenticated, async (req, res) => {
+    try {
+        const { oldPassword, password, confirmPassword } = req.body;
+        const _id = req.session.user.userId;
+        await updatePassword.validateAsync({ password, confirmPassword });
+        const user = await User.findOne({ _id });
+        if (user && user.comparePasswords(oldPassword)) {
+            let newPassword = hashSync(password, 10);
+            const dbresponse = await User.findOneAndUpdate({ _id }, { password: newPassword });
+            console.log(dbresponse);
+            req.session.destroy(err => {
+                if (err) throw (err);
+                res.clearCookie(SESS_NAME);
+                res.json({ "success": true, "message": "Password updated successfully" });
+            })
+        } else {
+            throw new Error('Invalid login credentials');
+        }
+    } catch (err) {
+        res.status(400).json(parseError(err));
     }
 });
 

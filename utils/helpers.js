@@ -30,6 +30,7 @@ const isNotAuthenticated = (req, res, next) => {
 }
 
 const parseError = (err) => {
+    console.log(err);
     if (err.isJoi) return { "sucess": false, "message": err.details[0].message };
     else if (err.errors) {
         return {
