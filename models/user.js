@@ -31,6 +31,16 @@ const UserSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true
+    },
+    site_admin: {
+        type: Boolean,
+        required: false,
+        default: false
+    },
+    type: {
+        type: String,
+        required: false,
+        default: "user"
     }
 }, { timestamps: true });
 
