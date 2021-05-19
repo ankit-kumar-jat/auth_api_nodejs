@@ -5,6 +5,7 @@ ISC License
 Copyright (c) [2021], [Ankit Kumar Jat]
 
 ======================================*/
+const { sendEmail } = require("./sendMail");
 
 const isAuthenticated = (req, res, next) => {
     if (req.session.user) {
@@ -53,7 +54,21 @@ const sessionizeUser = user => {
     return { userId: user.id, username: user.username };
 }
 
+const saveResetToken = async (resetPasswordToken, resetPasswordExpires, userId, Reset) => {
+    const newReset = new Reset({ resetPasswordToken, resetPasswordExpires, userId });
+    await newReset.save();
+    return { "resetPasswordToken": resetPasswordToken, "tokenId": newReset._id };
+}
+
+const sendMail = (token) => {
+    console.log(token);
+    sendEmail(`<p><strong>token</strong>: ${token.resetPasswordToken}<br> <strong>tokenid: ${token.tokenId}</p>`, 'ankjat066@gmail.com', 'Password reset token');
+
+}
+
 module.exports.sessionizeUser = sessionizeUser;
 module.exports.parseError = parseError;
 module.exports.isAuthenticated = isAuthenticated;
 module.exports.isNotAuthenticated = isNotAuthenticated;
+module.exports.saveResetToken = saveResetToken;
+module.exports.sendMail = sendMail;

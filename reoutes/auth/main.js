@@ -2,7 +2,7 @@ const { Router } = require("express");
 const { isAuthenticated, isNotAuthenticated } = require("../../utils/helpers");
 const User = require("../../models/user");
 const Reset = require("../../models/reset");
-const { parseError, sessionizeUser } = require("../../utils/helpers");
+const { parseError, sessionizeUser, saveResetToken, sendMail } = require("../../utils/helpers");
 const { signUp, signIn, updatePassword, Email } = require("../../validation/user");
 require("dotenv").config();
 const { hashSync } = require("bcryptjs");
@@ -111,25 +111,18 @@ authRouter.post("/forget-pass", isNotAuthenticated, async (req, res) => {
             const resetPasswordToken = crypto.randomBytes(32).toString('hex');
             const resetPasswordExpires = Date.now() + 3600000; //expires in an hour
             const userId = user._id;
-            const oldToken = await Reset.findOne(userId);
+            const oldToken = await Reset.findOne({ userId });
             if (oldToken) {
-                if (oldToken.resetPasswordExpires > Date.now()) {
-                    res.status(400).json({ "success": false, "message": "Reset token is already generated" })
-                } else {
-                    oldToken.deleteOne();
-                    //repeated code no. 1 make it a helper function
-                    const newReset = new Reset({ resetPasswordToken, resetPasswordExpires, userId });
-                    await newReset.save();
-                    console.log(resetPasswordToken, newReset._id);
-                    // send this token via email to user
-                    res.json({ "success": true, "message": "Reset token generated" })
-                }
-            } else {
-                //repeated code no. 1
-                const newReset = new Reset({ resetPasswordToken, resetPasswordExpires, userId });
-                await newReset.save();
-                console.log(resetPasswordToken, newReset._id);
+                oldToken.deleteOne();
+                const token = await saveResetToken(resetPasswordToken, resetPasswordExpires, userId, Reset);
                 // send this token via email to user
+                sendMail(token);
+                res.json({ "success": true, "message": "Reset token generated" })
+            }
+            else {
+                const token = await saveResetToken(resetPasswordToken, resetPasswordExpires, userId, Reset);
+                // send this token via email to user
+                sendMail(token);
                 res.json({ "success": true, "message": "Reset token generated" })
             }
         } else {
@@ -152,7 +145,7 @@ authRouter.post("/reset-pass", isNotAuthenticated, async (req, res) => {
                 if (user) { // && compareToken.validateAsync(user.resetPasswordToken, resetToken)
                     let newPassword = hashSync(password, 10);
                     await User.findOneAndUpdate({ _id }, { password: newPassword });
-                    token.deleteOne();
+                    await token.deleteOne();
                     res.json({ "success": true, "message": "Password updated sucessfully" });
                 } else {
                     throw new Error('User not found');

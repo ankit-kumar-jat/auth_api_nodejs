@@ -48,8 +48,8 @@ POST http://127.0.0.1:3000/auth/reset-pass HTTP/1.1
 Content-Type: application/json
 
 {
-    "tokenId":"609a12fb425bca44d81b9a11",
-    "resetPasswordToken": "79faa56c68d0d7adabf9290766ce751f97929dc905e81d2b5c973ea5f0a47032",
-    "password": "123@abcDEFG",
-    "confirmPassword": "123@abcDEFG"
+    "tokenId":"609a191aa7106b5748a31386",
+    "resetPasswordToken": "4480cb061dee70eb3c2cb85a5cb879767d69b6724568c909d2bdc133a3de855d",
+    "password": "123@abcDEF",
+    "confirmPassword": "123@abcDEF"
 }
